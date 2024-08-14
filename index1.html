@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruit Memory Puzzle Game</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-size: cover;
+            overflow: hidden;
+            text-align: center;
+        }
+        .start-menu, .game-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .button {
+            padding: 15px 30px;
+            font-size: 20px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        .button:hover {
+            transform: scale(1.05);
+        }
+        #playButton {
+            background-color: #2ecc71; /* Green */
+        }
+        #exitButton {
+            background-color: #e74c3c; /* Red */
+        }
+        #soundButton {
+            background-color: #f39c12; /* Yellow */
+        }
+        #contactButton {
+            background-color: #3498db; /* Blue */
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background: url('card-back.jpg') no-repeat center center;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            color: transparent;
+            cursor: pointer;
+            border-radius: 10px;
+            perspective: 1000px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        .card-front, .card-back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+        }
+        .card-front {
+            background: url('card-front.jpg') no-repeat center center;
+            background-size: cover;
+        }
+        .card-back {
+            background: url('card-back.jpg') no-repeat center center;
+            background-size: cover;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="startMenu" class="start-menu">
+    <button class="button" id="playButton">Play</button>
+    <button class="button" id="exitButton">Exit</button>
+    <button class="button" id="soundButton">Sound: On</button>
+    <button class="button" id="contactButton">Contact Us</button>
+</div>
+
+<div id="gameContainer" class="game-container hidden">
+    <!-- Cards will be generated here by JavaScript -->
+</div>
+
+<audio id="errorSound" src="error.mp3"></audio>
+<audio id="backgroundMusic" loop></audio>
+
+<script>
+    const fruits = [
+        '🍎', '🍎', '🍌', '🍌', '🍇', '🍇', '🍓', '🍓',
+        '🍉', '🍉', '🍍', '🍍', '🍒', '🍒', '🍑', '🍑',
+        '🥭', '🥭', '🍈', '🍈', '🍋', '🍋', '🥥', '🥥'
+    ];
+
+    const backgroundImages = [
+        'fruit-background1.jpg',
+        'fruit-background2.jpg',
+        'fruit-background3.jpg'
+    ];
+
+    const musicTracks = [
+        'music1.mp3',
+        'music2.mp3',
+        'music3.mp3'
+    ];
+
+    let firstCard = null;
+    let secondCard = null;
+    let lockBoard = false;
+    let soundOn = true;
+    const errorSound = document.getElementById('errorSound');
+    const backgroundMusic = document.getElementById('backgroundMusic');
+
+    document.getElementById('playButton').addEventListener('click', startGame);
+    document.getElementById('exitButton').addEventListener('click', () => window.close());
+    document.getElementById('soundButton').addEventListener('click', toggleSound);
+    document.getElementById('contactButton').addEventListener('click', contactUs);
+
+    function startGame() {
+        document.getElementById('startMenu').classList.add('hidden');
+        document.getElementById('gameContainer').classList.remove('hidden');
+        
+        // Set random background image
+        const randomBackground = backgroundImages[Math.floor(Math.random() * backgroundImages.length)];
+        document.body.style.backgroundImage = `url(${randomBackground})`;
+
+        // Set random music track
+        const randomMusic = musicTracks[Math.floor(Math.random() * musicTracks.length)];
+        backgroundMusic.src = randomMusic;
+        backgroundMusic.play();
+
+        createBoard();
+    }
+
+    function toggleSound() {
+        soundOn = !soundOn;
+        document.getElementById('soundButton').textContent = `Sound: ${soundOn ? 'On' : 'Off'}`;
+        if (soundOn) {
+            backgroundMusic.play();
+        } else {
+            backgroundMusic.pause();
+        }
+    }
+
+    function contactUs() {
+        const phoneNumber = '+923277025198';
+        const message = 'hello sir this game has some error';
+        const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        window.open(url, '_blank');
+    }
+
+    function shuffle(array) {
+        array.sort(() => Math.random() - 0.5);
+    }
+
+    function createBoard() {
+        const gameContainer = document.getElementById('gameContainer');
+        gameContainer.innerHTML = '';  // Clear previous cards
+        shuffle(fruits);
+        fruits.forEach(fruit => {
+            const cardElement = document.createElement('div');
+            cardElement.classList.add('card');
+            cardElement.dataset.value = fruit;
+
+            const cardInner = document.createElement('div');
+            cardInner.classList.add('card-inner');
+
+            const cardFront = document.createElement('div');
+            cardFront.classList.add('card-front');
+            cardFront.textContent = fruit;
+
+            const cardBack = document.createElement('div');
+            cardBack.classList.add('card-back');
+
+            cardInner.appendChild(cardFront);
+            cardInner.appendChild(cardBack);
+            cardElement.appendChild(cardInner);
+            cardElement.addEventListener('click', flipCard);
+            gameContainer.appendChild(cardElement);
+        });
+    }
+
+    function flipCard() {
+        if (lockBoard) return;
+        if (this === firstCard) return;
+
+        this.classList.add('flipped');
+        if (!firstCard) {
+            firstCard = this;
+            return;
+        }
+
+        secondCard = this;
+        lockBoard = true;
+
+        checkForMatch();
+    }
+
+    function checkForMatch() {
+        const isMatch = firstCard.dataset.value === secondCard.dataset.value;
+        isMatch ? disableCards() : unflipCards();
+    }
+
+    function disableCards() {
+        firstCard.removeEventListener('click', flipCard);
+        secondCard.removeEventListener('click', flipCard);
+
+        resetBoard();
+    }
+
+    function unflipCards() {
+        if (soundOn) errorSound.play();
+        setTimeout(() => {
+            firstCard.classList.remove('flipped');
+            secondCard.classList.remove('flipped');
+
+            resetBoard();
+        }, 1000);
+    }
+
+    function resetBoard() {
+        [firstCard, secondCard] = [null, null];
+        lockBoard = false;
+    }
+</script>
+
+</body>
+</html>
